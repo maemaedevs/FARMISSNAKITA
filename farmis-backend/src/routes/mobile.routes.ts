@@ -1,7 +1,16 @@
 import { Router } from 'express';
 
 import { listMobileDistributions } from '../controllers/assistance-distributions.controller';
-import { listMobileCropRecords } from '../controllers/crop-records.controller';
+import {
+  createMobileCropRecord,
+  harvestMobileCropRecord,
+  listMobileCropRecords,
+} from '../controllers/crop-records.controller';
+import { getMobileReportsOverview } from '../controllers/reports.controller';
+import {
+  createMobileSituationReport,
+  listMobileSituationReports,
+} from '../controllers/situation-reports.controller';
 import {
   changeMobilePassword,
   getMobileProfile,
@@ -10,7 +19,7 @@ import {
   uploadMobileAvatar,
 } from '../controllers/mobile.controller';
 import { authenticateJwt, requireClient } from '../middleware/auth';
-import { avatarUpload } from '../middleware/upload';
+import { avatarUpload, situationReportFieldsUpload } from '../middleware/upload';
 import { AppError } from '../middleware/error';
 
 const mobileApi = Router();
@@ -34,6 +43,25 @@ mobileApi.patch('/password', changeMobilePassword);
 mobileApi.get('/programs', listMobilePrograms);
 mobileApi.get('/distributions', listMobileDistributions);
 mobileApi.get('/crop-records', listMobileCropRecords);
+mobileApi.post('/crop-records', createMobileCropRecord);
+mobileApi.patch('/crop-records/:id/harvest', harvestMobileCropRecord);
+mobileApi.get('/reports/overview', getMobileReportsOverview);
+mobileApi.get('/situation-reports', listMobileSituationReports);
+mobileApi.post('/situation-reports', (req, res, next) => {
+  situationReportFieldsUpload.fields([
+    { name: 'photoCrop', maxCount: 1 },
+    { name: 'photoLandslide', maxCount: 1 },
+    { name: 'photoOther', maxCount: 1 },
+    { name: 'document', maxCount: 1 },
+  ])(req, res, (err) => {
+    if (err) {
+      return next(
+        new AppError(400, err instanceof Error ? err.message : 'Upload failed'),
+      );
+    }
+    return createMobileSituationReport(req, res, next);
+  });
+});
 
 export const mobileRouter = Router();
 

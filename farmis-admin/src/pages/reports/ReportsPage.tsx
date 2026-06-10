@@ -8,6 +8,7 @@ import {
   Gift,
   HandCoins,
   Layers,
+  Loader2,
   MoreVertical,
   Sprout,
   Tractor,
@@ -16,25 +17,19 @@ import {
   Wheat,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button, Select } from '@/components/common';
 import { Pagination } from '@/components/list';
 import { cn } from '@/lib/cn';
+import { api } from '@/services/api';
+import type { ProgramPerformanceRow, ReportsOverview } from '@/types';
 import { formatNumber, formatPeso } from '@/utils/format';
 import { DonutChartCard } from './DonutChartCard';
+import { FieldReportsTab } from './FieldReportsTab';
 import { KpiCard } from './KpiCard';
-import {
-  BENEFICIARIES_BY_TYPE,
-  COMPARE_PERIOD,
-  DATE_RANGE_LABEL,
-  FUNDING_SOURCES,
-  PROGRAM_PERFORMANCE,
-  PROGRAMS_BY_STATUS,
-  REPORT_KPIS,
-  TOTAL_PROGRAM_ROWS,
-  type ProgramPerformanceRow,
-} from './reports.data';
 
 type ReportTab =
+  | 'field-reports'
   | 'overview'
   | 'program-performance'
   | 'beneficiary-summary'
@@ -42,6 +37,7 @@ type ReportTab =
   | 'distribution-summary';
 
 const TABS: { id: ReportTab; label: string }[] = [
+  { id: 'field-reports', label: 'Field Reports' },
   { id: 'overview', label: 'Overview' },
   { id: 'program-performance', label: 'Program Performance' },
   { id: 'beneficiary-summary', label: 'Beneficiary Summary' },
@@ -67,19 +63,33 @@ const PROGRAM_ICONS: Record<ProgramPerformanceRow['icon'], LucideIcon> = {
 };
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState<ReportTab>('overview');
+  const [activeTab, setActiveTab] = useState<ReportTab>('field-reports');
   const [programType, setProgramType] = useState('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
-  const paginatedPrograms = useMemo(() => {
-    const rows =
-      programType === 'all'
-        ? PROGRAM_PERFORMANCE
-        : PROGRAM_PERFORMANCE.filter((r) => r.programType === programType);
-    const start = (page - 1) * pageSize;
-    return { rows: rows.slice(start, start + pageSize), total: rows.length };
-  }, [programType, page, pageSize]);
+  const { data, isLoading, isError } = useQuery<ReportsOverview>({
+    queryKey: ['reports', 'overview', { programType, page, pageSize }] as const,
+    enabled: activeTab === 'overview',
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('pageSize', String(pageSize));
+      if (programType !== 'all') params.set('programType', programType);
+      const res = await api.get<ReportsOverview>(
+        `/admin/reports/overview?${params.toString()}`,
+      );
+      return res.data;
+    },
+  });
+
+  const paginatedPrograms = useMemo(
+    () => ({
+      rows: data?.programPerformance ?? [],
+      total: data?.programPerformanceTotal ?? 0,
+    }),
+    [data],
+  );
 
   return (
     <>
@@ -122,39 +132,53 @@ export default function ReportsPage() {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink-100 bg-white px-3 text-xs font-medium text-ink-600 transition hover:bg-ink-50"
-          >
-            <CalendarRange className="h-4 w-4 text-ink-400" />
-            {DATE_RANGE_LABEL}
-          </button>
-          <div className="w-44">
-            <Select
-              value={programType}
-              onChange={(e) => {
-                setProgramType(e.target.value);
-                setPage(1);
-              }}
-              options={[
-                { value: 'all', label: 'All Program Types' },
-                { value: 'Input Support', label: 'Input Support' },
-                { value: 'Production Support', label: 'Production Support' },
-                { value: 'Livestock', label: 'Livestock' },
-                { value: 'Infrastructure', label: 'Infrastructure' },
-                {
-                  value: 'Training & Support',
-                  label: 'Training & Support',
-                },
-              ]}
-            />
+        {activeTab === 'overview' ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-ink-100 bg-white px-3 text-xs font-medium text-ink-600 transition hover:bg-ink-50"
+            >
+              <CalendarRange className="h-4 w-4 text-ink-400" />
+              {data?.dateRangeLabel ?? 'Loading…'}
+            </button>
+            <div className="w-44">
+              <Select
+                value={programType}
+                onChange={(e) => {
+                  setProgramType(e.target.value);
+                  setPage(1);
+                }}
+                options={[
+                  { value: 'all', label: 'All Program Types' },
+                  { value: 'Input Support', label: 'Input Support' },
+                  { value: 'Production Support', label: 'Production Support' },
+                  { value: 'Livestock', label: 'Livestock' },
+                  { value: 'Infrastructure', label: 'Infrastructure' },
+                  {
+                    value: 'Training & Support',
+                    label: 'Training & Support',
+                  },
+                ]}
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
-      {activeTab === 'overview' ? (
+      {activeTab === 'field-reports' ? (
+        <FieldReportsTab />
+      ) : isLoading ? (
+        <div className="flex min-h-[320px] items-center justify-center rounded-[var(--radius-card)] border border-ink-100 bg-white shadow-[var(--shadow-soft)]">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+        </div>
+      ) : isError || !data ? (
+        <div className="rounded-[var(--radius-card)] border border-red-100 bg-red-50 p-8 text-center text-sm text-red-700">
+          Could not load reports. Check that the backend is running and try
+          again.
+        </div>
+      ) : activeTab === 'overview' ? (
         <OverviewContent
+          data={data}
           page={page}
           pageSize={pageSize}
           paginatedPrograms={paginatedPrograms}
@@ -172,19 +196,21 @@ export default function ReportsPage() {
 }
 
 function OverviewContent({
+  data,
   page,
   pageSize,
   paginatedPrograms,
   onPageChange,
   onPageSizeChange,
 }: {
+  data: ReportsOverview;
   page: number;
   pageSize: number;
   paginatedPrograms: { rows: ProgramPerformanceRow[]; total: number };
   onPageChange: (p: number) => void;
   onPageSizeChange: (s: number) => void;
 }) {
-  const kpi = REPORT_KPIS;
+  const kpi = data.kpis;
 
   return (
     <>
@@ -194,7 +220,7 @@ function OverviewContent({
           value={formatNumber(kpi.totalBeneficiaries.value)}
           delta={kpi.totalBeneficiaries.delta}
           positive={kpi.totalBeneficiaries.positive}
-          comparePeriod={COMPARE_PERIOD}
+          comparePeriod={data.comparePeriod}
           icon={Users}
           tone="emerald"
         />
@@ -203,7 +229,7 @@ function OverviewContent({
           value={formatNumber(kpi.totalPrograms.value)}
           delta={kpi.totalPrograms.delta}
           positive={kpi.totalPrograms.positive}
-          comparePeriod={COMPARE_PERIOD}
+          comparePeriod={data.comparePeriod}
           icon={Layers}
           tone="sky"
         />
@@ -212,7 +238,7 @@ function OverviewContent({
           value={formatPeso(kpi.totalFunding.value)}
           delta={kpi.totalFunding.delta}
           positive={kpi.totalFunding.positive}
-          comparePeriod={COMPARE_PERIOD}
+          comparePeriod={data.comparePeriod}
           icon={HandCoins}
           tone="amber"
         />
@@ -221,7 +247,7 @@ function OverviewContent({
           value={formatNumber(kpi.totalDistributions.value)}
           delta={kpi.totalDistributions.delta}
           positive={kpi.totalDistributions.positive}
-          comparePeriod={COMPARE_PERIOD}
+          comparePeriod={data.comparePeriod}
           icon={Truck}
           tone="violet"
         />
@@ -230,17 +256,17 @@ function OverviewContent({
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <DonutChartCard
           title="Programs by Status"
-          data={PROGRAMS_BY_STATUS}
+          data={data.programsByStatus}
           mode="count"
         />
         <DonutChartCard
           title="Beneficiaries by Program Type"
-          data={BENEFICIARIES_BY_TYPE}
+          data={data.beneficiariesByType}
           mode="percent"
         />
         <DonutChartCard
           title="Funding Source Breakdown"
-          data={FUNDING_SOURCES}
+          data={data.fundingSources}
           mode="percent"
         />
       </div>
@@ -280,7 +306,7 @@ function OverviewContent({
         <Pagination
           page={page}
           pageSize={pageSize}
-          total={paginatedPrograms.total || TOTAL_PROGRAM_ROWS}
+          total={paginatedPrograms.total}
           itemCount={paginatedPrograms.rows.length}
           entityLabel="programs"
           onPageChange={onPageChange}
@@ -373,7 +399,10 @@ function PerformanceRow({ row }: { row: ProgramPerformanceRow }) {
 }
 
 function TabPlaceholder({ tab }: { tab: ReportTab }) {
-  const labels: Record<Exclude<ReportTab, 'overview'>, string> = {
+  const labels: Record<
+    Exclude<ReportTab, 'overview' | 'field-reports'>,
+    string
+  > = {
     'program-performance': 'Program Performance',
     'beneficiary-summary': 'Beneficiary Summary',
     'funding-summary': 'Funding Summary',
@@ -384,10 +413,11 @@ function TabPlaceholder({ tab }: { tab: ReportTab }) {
     <div className="rounded-[var(--radius-card)] border border-ink-100 bg-white p-12 text-center shadow-[var(--shadow-soft)]">
       <FileText className="mx-auto h-10 w-10 text-brand-500" />
       <h2 className="mt-4 text-base font-semibold text-ink-800">
-        {labels[tab as Exclude<ReportTab, 'overview'>]}
+        {labels[tab as Exclude<ReportTab, 'overview' | 'field-reports'>]}
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-400">
-        Detailed {labels[tab as Exclude<ReportTab, 'overview'>].toLowerCase()}{' '}
+        Detailed{' '}
+        {labels[tab as Exclude<ReportTab, 'overview' | 'field-reports'>].toLowerCase()}{' '}
         charts and export options will be available here. Use the Overview tab
         for the full dashboard summary.
       </p>

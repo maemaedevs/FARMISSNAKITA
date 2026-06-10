@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, type Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import type { ComponentType } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -27,6 +28,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import {
   getMobileCropRecords,
+  harvestMobileCropRecord,
   type MobileCropRecord,
 } from "@/services/mobileCropApi";
 import { getSession } from "@/lib/session";
@@ -86,6 +88,7 @@ export function DashboardScreen() {
   const [cropsRefreshing, setCropsRefreshing] = useState(false);
   const [cropsError, setCropsError] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [harvestingId, setHarvestingId] = useState<string | null>(null);
 
   const loadCropRecords = useCallback(async (isRefresh = false) => {
     const session = getSession();
@@ -120,7 +123,8 @@ export function DashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       void refreshNotifications();
-    }, [refreshNotifications]),
+      void loadCropRecords(true);
+    }, [refreshNotifications, loadCropRecords]),
   );
 
   const categories = useMemo(
@@ -151,6 +155,50 @@ export function DashboardScreen() {
   function clearCategoryFilter() {
     setSelectedCategoryId(null);
   }
+
+  const handleHarvest = useCallback(
+    (record: MobileCropRecord) => {
+      Alert.alert(
+        t("cropHarvest.harvestConfirmTitle"),
+        t("cropHarvest.harvestConfirmBody", { cropName: record.cropName }),
+        [
+          { text: t("profile.cancel"), style: "cancel" },
+          {
+            text: t("cropHarvest.markHarvested"),
+            onPress: () => {
+              void (async () => {
+                const session = getSession();
+                if (!session?.token) return;
+
+                setHarvestingId(record.id);
+                try {
+                  const updated = await harvestMobileCropRecord(
+                    session.token,
+                    record.id,
+                  );
+                  setCropRecords((current) =>
+                    current.map((item) =>
+                      item.id === updated.id ? updated : item,
+                    ),
+                  );
+                } catch (err) {
+                  Alert.alert(
+                    t("cropHarvest.harvestConfirmTitle"),
+                    err instanceof Error
+                      ? err.message
+                      : t("cropHarvest.harvestFailed"),
+                  );
+                } finally {
+                  setHarvestingId(null);
+                }
+              })();
+            },
+          },
+        ],
+      );
+    },
+    [t],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -266,11 +314,22 @@ export function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t("dashboard.cropHarvest")}</Text>
-          {selectedCategoryId ? (
-            <Text style={styles.filterHint}>
-              {t("dashboard.filteredByCategory")}
-            </Text>
-          ) : null}
+          <View style={styles.cropHarvestActions}>
+            {selectedCategoryId ? (
+              <Text style={styles.filterHint}>
+                {t("dashboard.filteredByCategory")}
+              </Text>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("dashboard.addCrop")}
+              onPress={() => router.push("/add-crop" as Href)}
+              style={({ pressed }) => [styles.addCropBtn, pressed && styles.headerBellPressed]}
+            >
+              <Ionicons name="add" size={18} color={Colors.accent} />
+              <Text style={styles.addCropText}>{t("dashboard.addCrop")}</Text>
+            </Pressable>
+          </View>
         </View>
 
         {cropsLoading ? (
@@ -302,15 +361,55 @@ export function DashboardScreen() {
               >
                 <Text style={styles.retryText}>{t("dashboard.clearCategoryFilter")}</Text>
               </Pressable>
-            ) : null}
+            ) : (
+              <Pressable
+                style={({ pressed }) => [styles.retryBtn, pressed && styles.headerBellPressed]}
+                onPress={() => router.push("/add-crop" as Href)}
+              >
+                <Text style={styles.retryText}>{t("dashboard.addCrop")}</Text>
+              </Pressable>
+            )}
           </View>
         ) : (
           <View style={styles.cropCards}>
             {filteredCropRecords.map((record) => (
-              <CropHarvestCard key={record.id} record={record} />
+              <CropHarvestCard
+                key={record.id}
+                record={record}
+                onHarvest={handleHarvest}
+                harvesting={harvestingId === record.id}
+              />
             ))}
           </View>
         )}
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t("dashboard.reports")}</Text>
+          <Pressable
+            onPress={() => router.push("/reports" as Href)}
+            accessibilityRole="button"
+            accessibilityLabel={t("dashboard.viewReports")}
+            hitSlop={8}
+          >
+            <Text style={styles.viewAll}>{t("common.viewAll")}</Text>
+          </Pressable>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [styles.reportsCard, pressed && styles.headerBellPressed]}
+          onPress={() => router.push("/reports" as Href)}
+          accessibilityRole="button"
+          accessibilityLabel={t("dashboard.viewReports")}
+        >
+          <View style={styles.reportsIconWrap}>
+            <Ionicons name="bar-chart-outline" size={22} color={Colors.accent} />
+          </View>
+          <View style={styles.reportsTextWrap}>
+            <Text style={styles.reportsTitle}>{t("dashboard.reportsTitle")}</Text>
+            <Text style={styles.reportsSubtitle}>{t("dashboard.reportsSubtitle")}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
+        </Pressable>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t("dashboard.farmOverview")}</Text>
@@ -482,6 +581,25 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     opacity: 0.5,
   },
+  cropHarvestActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  addCropBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.primaryLight,
+  },
+  addCropText: {
+    color: Colors.accent,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+  },
   filterHint: {
     color: Colors.textMuted,
     fontSize: FontSize.xs,
@@ -523,6 +641,39 @@ const styles = StyleSheet.create({
   categoryTextSelected: {
     color: Colors.accent,
     fontWeight: FontWeight.semibold,
+  },
+  reportsCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.primaryLight,
+    backgroundColor: Colors.primary,
+  },
+  reportsIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  reportsTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  reportsTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  reportsSubtitle: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    lineHeight: 16,
   },
   farmOverview: {
     height: 250,

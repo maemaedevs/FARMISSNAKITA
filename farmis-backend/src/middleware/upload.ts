@@ -117,3 +117,95 @@ export const landDocumentUpload = multer({
 export function landDocumentPublicPath(farmerId: string, filename: string): string {
   return `/uploads/land-documents/${farmerId}/${filename}`;
 }
+
+const SITUATION_REPORT_DIR = path.join(
+  process.cwd(),
+  'uploads',
+  'situation-reports',
+);
+
+fs.mkdirSync(SITUATION_REPORT_DIR, { recursive: true });
+
+const situationReportStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, SITUATION_REPORT_DIR);
+  },
+  filename: (req, file, cb) => {
+    const farmerId = req.auth?.sub ?? 'unknown';
+    const fromName = path.extname(file.originalname).toLowerCase();
+    const ext = ALLOWED_EXTENSIONS.has(fromName)
+      ? fromName
+      : extensionForMime(file.mimetype);
+    cb(null, `${farmerId}-${Date.now()}${ext}`);
+  },
+});
+
+export const situationReportUpload = multer({
+  storage: situationReportStorage,
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only image files are allowed'));
+  },
+});
+
+export function situationReportPublicPath(filename: string): string {
+  return `/uploads/situation-reports/${filename}`;
+}
+
+const SITUATION_DOC_DIR = path.join(
+  process.cwd(),
+  'uploads',
+  'situation-documents',
+);
+
+fs.mkdirSync(SITUATION_DOC_DIR, { recursive: true });
+
+export const situationReportFieldsUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, file, cb) => {
+      if (file.fieldname === 'document') {
+        cb(null, SITUATION_DOC_DIR);
+        return;
+      }
+      cb(null, SITUATION_REPORT_DIR);
+    },
+    filename: (req, file, cb) => {
+      const farmerId = req.auth?.sub ?? 'unknown';
+      if (file.fieldname === 'document') {
+        const ext = extensionForLandDocument(file.mimetype, file.originalname);
+        cb(null, `${farmerId}-doc-${Date.now()}${ext}`);
+        return;
+      }
+      const fromName = path.extname(file.originalname).toLowerCase();
+      const ext = ALLOWED_EXTENSIONS.has(fromName)
+        ? fromName
+        : extensionForMime(file.mimetype);
+      cb(null, `${farmerId}-${file.fieldname}-${Date.now()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.fieldname === 'document') {
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (LAND_DOC_MIMES.has(file.mimetype) || LAND_DOC_EXTENSIONS.has(ext)) {
+        cb(null, true);
+        return;
+      }
+      cb(new Error('Documents must be JPEG, PNG, or PDF'));
+      return;
+    }
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only image files are allowed for photos'));
+  },
+});
+
+export function situationDocumentPublicPath(filename: string): string {
+  return `/uploads/situation-documents/${filename}`;
+}

@@ -30,7 +30,12 @@ type TranslationPath =
   | `common.${keyof Translations["common"]}`
   | `onboarding.${keyof Translations["onboarding"]}`
   | `dashboard.${keyof Translations["dashboard"]}`
-  | `cropHarvest.${keyof Translations["cropHarvest"]}`
+  | `reports.${keyof Translations["reports"]}`
+  | `situationReport.${Exclude<keyof Translations["situationReport"], "incidents" | "status">}`
+  | `situationReport.incidents.${keyof Translations["situationReport"]["incidents"]}`
+  | `situationReport.status.${keyof Translations["situationReport"]["status"]}`
+  | `cropHarvest.${Exclude<keyof Translations["cropHarvest"], "cropTypes">}`
+  | `cropHarvest.cropTypes.${keyof Translations["cropHarvest"]["cropTypes"]}`
   | `categories.${keyof Translations["categories"]}`
   | `tabs.${keyof Translations["tabs"]}`
   | `notifications.${Exclude<keyof Translations["notifications"], "items" | "time">}`

@@ -59,6 +59,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="report"
+        options={{
+          title: t("tabs.report"),
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "camera" : "camera-outline"}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: t("tabs.profile"),

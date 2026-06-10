@@ -246,3 +246,79 @@ export const DEV_DISTRIBUTIONS: Array<{
   },
 ];
 
+export const DEV_SITUATION_REPORTS: Array<{
+  id: string;
+  reportCode: string;
+  status: 'pending' | 'reviewed' | 'resolved';
+  createdAt: string;
+  fullName: string;
+  contactNumber: string;
+  address: string;
+  incidentTypes: string[];
+  incidentOther: string | null;
+  incidentAt: string;
+  sitioPurok: string;
+  barangay: string;
+  mapLatitude: number | null;
+  mapLongitude: number | null;
+  cropType: string;
+  estimatedAreaHa: number;
+  estimatedLossPeso: number;
+  damageDescription: string;
+  photoCropUrl: string | null;
+  photoLandslideUrl: string | null;
+  photoOtherUrl: string | null;
+  docProofOfLand: boolean;
+  docListOfCrops: boolean;
+  docValidId: boolean;
+  docOther: boolean;
+  documentUrl: string | null;
+  documentName: string | null;
+  declared: boolean;
+  title: string;
+  description: string;
+  category: string;
+  imageUrl: string | null;
+  farmerId: string;
+  farmerName: string;
+  farmerCode: string;
+}> = [
+  {
+    id: 'sit_0001',
+    reportCode: 'RPT-0001',
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    fullName: DEV_FARMERS[0]?.name ?? 'Juan Dela Cruz',
+    contactNumber: DEV_FARMERS[0]?.contactNumber ?? '09171234567',
+    address: DEV_FARMERS[0]?.address ?? 'San Isidro, Example Province',
+    incidentTypes: ['flood'],
+    incidentOther: null,
+    incidentAt: new Date().toISOString(),
+    sitioPurok: 'Purok 3',
+    barangay: 'San Isidro',
+    mapLatitude: null,
+    mapLongitude: null,
+    cropType: 'Rice',
+    estimatedAreaHa: 1.5,
+    estimatedLossPeso: 5000,
+    damageDescription: 'Flood water reached knee level and submerged rice plots.',
+    photoCropUrl: '/uploads/situation-reports/sample-crop.jpg',
+    photoLandslideUrl: null,
+    photoOtherUrl: null,
+    docProofOfLand: true,
+    docListOfCrops: true,
+    docValidId: false,
+    docOther: false,
+    documentUrl: null,
+    documentName: null,
+    declared: true,
+    title: 'Rice damage report',
+    description: 'Flood water reached knee level and submerged rice plots.',
+    category: 'flood',
+    imageUrl: '/uploads/situation-reports/sample-crop.jpg',
+    farmerId: DEV_FARMERS[0]?.id ?? 'far_0001',
+    farmerName: DEV_FARMERS[0]?.name ?? 'Juan Dela Cruz',
+    farmerCode: DEV_FARMERS[0]?.farmerCode ?? 'FARM-0001',
+  },
+];
+

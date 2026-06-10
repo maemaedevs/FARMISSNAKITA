@@ -60,6 +60,14 @@ type Paginated<T> = {
   total: number;
 };
 
+export type CreateMobileCropRecordInput = {
+  cropName: string;
+  cropType: string;
+  farmAreaHa: number;
+  plantingDate: string;
+  expectedHarvestDate: string;
+};
+
 export async function getMobileCropRecords(
   token: string,
 ): Promise<Paginated<MobileCropRecord>> {
@@ -78,4 +86,45 @@ export async function getMobileCropRecords(
     throw new Error(await readErrorMessage(res));
   }
   return (await res.json()) as Paginated<MobileCropRecord>;
+}
+
+export async function createMobileCropRecord(
+  token: string,
+  input: CreateMobileCropRecordInput,
+): Promise<MobileCropRecord> {
+  const base = getApiBaseUrl();
+  const res = await fetchWithTimeout(`${base}/api/mobile/crop-records`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res));
+  }
+  return (await res.json()) as MobileCropRecord;
+}
+
+export async function harvestMobileCropRecord(
+  token: string,
+  cropRecordId: string,
+): Promise<MobileCropRecord> {
+  const base = getApiBaseUrl();
+  const res = await fetchWithTimeout(
+    `${base}/api/mobile/crop-records/${encodeURIComponent(cropRecordId)}/harvest`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res));
+  }
+  return (await res.json()) as MobileCropRecord;
 }

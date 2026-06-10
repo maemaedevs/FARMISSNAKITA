@@ -218,6 +218,119 @@ export async function createCropRecord(
   }
 }
 
+const createMobileCropRecordSchema = z.object({
+  cropName: z.string().min(1),
+  cropType: z.string().min(1),
+  farmAreaHa: z.coerce.number().min(0),
+  plantingDate: z.string().min(1),
+  expectedHarvestDate: z.string().min(1),
+});
+
+export async function createMobileCropRecord(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const farmerId = req.auth?.sub;
+    if (!farmerId) throw new AppError(401, 'Unauthenticated');
+
+    const body = createMobileCropRecordSchema.parse(req.body);
+
+    const plantingDate = new Date(body.plantingDate);
+    const expectedHarvestDate = new Date(body.expectedHarvestDate);
+
+    if (
+      Number.isNaN(plantingDate.getTime()) ||
+      Number.isNaN(expectedHarvestDate.getTime())
+    ) {
+      throw new AppError(400, 'Invalid planting or harvest date');
+    }
+
+    if (expectedHarvestDate < plantingDate) {
+      throw new AppError(400, 'Expected harvest date must be after planting date');
+    }
+
+    const farmer = await prisma.farmer.findUnique({
+      where: { id: farmerId },
+      select: { id: true, name: true, barangay: true },
+    });
+
+    if (!farmer) {
+      throw new AppError(404, 'Farmer not found');
+    }
+
+    const cropCode = await nextCropCode();
+
+    const created = await prisma.cropRecord.create({
+      data: {
+        cropCode,
+        farmerId,
+        cropName: body.cropName.trim(),
+        cropType: body.cropType.trim(),
+        farmAreaHa: body.farmAreaHa,
+        plantingDate,
+        expectedHarvestDate,
+        status: 'growing',
+      },
+      include: {
+        farmer: {
+          select: { name: true, barangay: true },
+        },
+      },
+    });
+
+    res.status(201);
+    return res.json(mapCropRecord(created));
+  } catch (err) {
+    return next(err);
+  }
+}
+
+export async function harvestMobileCropRecord(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const farmerId = req.auth?.sub;
+    if (!farmerId) throw new AppError(401, 'Unauthenticated');
+
+    const { id } = z.object({ id: z.string().min(1) }).parse(req.params);
+
+    const existing = await prisma.cropRecord.findFirst({
+      where: { id, farmerId },
+      include: {
+        farmer: {
+          select: { name: true, barangay: true },
+        },
+      },
+    });
+
+    if (!existing) {
+      throw new AppError(404, 'Crop record not found');
+    }
+
+    if (existing.status === 'harvested') {
+      throw new AppError(400, 'Crop record is already harvested');
+    }
+
+    const updated = await prisma.cropRecord.update({
+      where: { id: existing.id },
+      data: { status: 'harvested' },
+      include: {
+        farmer: {
+          select: { name: true, barangay: true },
+        },
+      },
+    });
+
+    return res.json(mapCropRecord(updated));
+  } catch (err) {
+    return next(err);
+  }
+}
+
 export async function listMobileCropRecords(
   req: Request,
   res: Response,

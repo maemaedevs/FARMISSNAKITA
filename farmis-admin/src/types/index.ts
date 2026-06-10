@@ -331,3 +331,103 @@ export interface PaginatedResponse<T> {
   pageSize: number;
   total: number;
 }
+
+export type ReportKpi = {
+  value: number;
+  delta: number;
+  positive: boolean;
+};
+
+export type ReportChartSlice = {
+  name: string;
+  value: number;
+  color: string;
+};
+
+export type ProgramPerformanceRow = {
+  id: string;
+  programCode: string;
+  name: string;
+  icon: AssistanceProgram['icon'];
+  programType: ProgramType | 'Training & Support';
+  targetBeneficiaries: number;
+  actualBeneficiaries: number;
+  fundingAllocated: number;
+  amountUtilized: number;
+  status: ProgramStatus;
+  progressPercent: number;
+};
+
+export type SituationReportStatus = 'pending' | 'reviewed' | 'resolved';
+
+export type SituationReportCategory =
+  | 'storm_typhoon'
+  | 'landslide'
+  | 'flood'
+  | 'other';
+
+export interface SituationReport {
+  id: string;
+  reportCode: string;
+  status: SituationReportStatus;
+  createdAt: string;
+  fullName: string;
+  contactNumber: string;
+  address: string;
+  incidentTypes: string[];
+  incidentOther: string | null;
+  incidentAt: string;
+  sitioPurok: string;
+  barangay: string;
+  mapLatitude: number | null;
+  mapLongitude: number | null;
+  cropType: string;
+  estimatedAreaHa: number;
+  estimatedLossPeso: number;
+  damageDescription: string;
+  photoCropUrl: string | null;
+  photoLandslideUrl: string | null;
+  photoOtherUrl: string | null;
+  docProofOfLand: boolean;
+  docListOfCrops: boolean;
+  docValidId: boolean;
+  docOther: boolean;
+  documentUrl: string | null;
+  documentName: string | null;
+  declared: boolean;
+  title: string;
+  description: string;
+  category: SituationReportCategory | string;
+  imageUrl: string;
+  farmerId: string;
+  farmerName: string;
+  farmerCode: string;
+}
+
+export interface SituationReportStats {
+  pending: number;
+  reviewed: number;
+  resolved: number;
+  total: number;
+}
+
+export interface SituationReportsResponse
+  extends PaginatedResponse<SituationReport> {
+  stats: SituationReportStats;
+}
+
+export interface ReportsOverview {
+  dateRangeLabel: string;
+  comparePeriod: string;
+  kpis: {
+    totalBeneficiaries: ReportKpi;
+    totalPrograms: ReportKpi;
+    totalFunding: ReportKpi;
+    totalDistributions: ReportKpi;
+  };
+  programsByStatus: ReportChartSlice[];
+  beneficiariesByType: ReportChartSlice[];
+  fundingSources: ReportChartSlice[];
+  programPerformance: ProgramPerformanceRow[];
+  programPerformanceTotal: number;
+}

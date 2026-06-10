@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Colors, FontSize, FontWeight, Radius, Spacing } from "@/constants";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -30,9 +30,15 @@ function formatDate(iso: string): string {
 
 type CropHarvestCardProps = {
   record: MobileCropRecord;
+  onHarvest?: (record: MobileCropRecord) => void;
+  harvesting?: boolean;
 };
 
-export function CropHarvestCard({ record }: CropHarvestCardProps) {
+export function CropHarvestCard({
+  record,
+  onHarvest,
+  harvesting = false,
+}: CropHarvestCardProps) {
   const { t } = useLanguage();
   const statusStyle = STATUS_STYLES[record.status];
 
@@ -86,6 +92,29 @@ export function CropHarvestCard({ record }: CropHarvestCardProps) {
           icon="time-outline"
         />
       </View>
+
+      {record.status === "growing" && onHarvest ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("cropHarvest.markHarvested")}
+          disabled={harvesting}
+          onPress={() => onHarvest(record)}
+          style={({ pressed }) => [
+            styles.harvestBtn,
+            pressed && !harvesting && styles.harvestBtnPressed,
+            harvesting && styles.harvestBtnDisabled,
+          ]}
+        >
+          {harvesting ? (
+            <ActivityIndicator color={Colors.accent} size="small" />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.accent} />
+              <Text style={styles.harvestBtnText}>{t("cropHarvest.markHarvested")}</Text>
+            </>
+          )}
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -205,5 +234,28 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     paddingLeft: 16,
+  },
+  harvestBtn: {
+    marginTop: Spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    backgroundColor: "rgba(34, 197, 94, 0.08)",
+  },
+  harvestBtnPressed: {
+    opacity: 0.85,
+  },
+  harvestBtnDisabled: {
+    opacity: 0.6,
+  },
+  harvestBtnText: {
+    color: Colors.accent,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });

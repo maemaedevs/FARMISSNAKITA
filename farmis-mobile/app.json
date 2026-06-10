@@ -28,7 +28,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow FARMIS to access your photos so you can set a profile picture."
+          "photosPermission": "Allow FARMIS to access your photos for profile pictures and field reports.",
+          "cameraPermission": "Allow FARMIS to use the camera so you can photograph farm situations for field reports."
         }
       ],
       [

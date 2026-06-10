@@ -19,6 +19,11 @@ import {
   createCropRecord,
   listCropRecords,
 } from '../controllers/crop-records.controller';
+import { getAdminReportsOverview } from '../controllers/reports.controller';
+import {
+  listAdminSituationReports,
+  updateAdminSituationReport,
+} from '../controllers/situation-reports.controller';
 import { authenticateJwt, requireAdmin } from '../middleware/auth';
 import { AppError } from '../middleware/error';
 import { landDocumentUpload } from '../middleware/upload';
@@ -50,6 +55,9 @@ adminApi.post('/programs', createProgram);
 adminApi.get('/distributions', listDistributions);
 adminApi.post('/distributions', createDistribution);
 adminApi.patch('/distributions/:id', updateDistribution);
+adminApi.get('/reports/overview', getAdminReportsOverview);
+adminApi.get('/situation-reports', listAdminSituationReports);
+adminApi.patch('/situation-reports/:id', updateAdminSituationReport);
 
 export const adminRouter = Router();
 

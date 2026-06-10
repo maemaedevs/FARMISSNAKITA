@@ -80,6 +80,52 @@ model Farmer {
   landDocuments            FarmerLandDocument[]
   cropRecords              CropRecord[]
   assistanceDistributions  AssistanceDistribution[]
+  situationReports         SituationReport[]
+}
+
+model SituationReport {
+  id          String   @id @default(cuid())
+  reportCode  String   @unique
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fullName        String
+  contactNumber   String
+  address         String
+  incidentTypes   String[]
+  incidentOther   String?
+  incidentAt      DateTime
+  sitioPurok      String
+  barangay        String
+  mapLatitude     Float?
+  mapLongitude    Float?
+  cropType        String
+  estimatedAreaHa Float
+  estimatedLossPeso Float
+  damageDescription String
+  photoCropUrl      String?
+  photoLandslideUrl String?
+  photoOtherUrl     String?
+  docProofOfLand    Boolean @default(false)
+  docListOfCrops    Boolean @default(false)
+  docValidId        Boolean @default(false)
+  docOther          Boolean @default(false)
+  documentUrl       String?
+  documentName      String?
+  declared          Boolean @default(false)
+
+  title       String
+  description String
+  category    String @default("other")
+  imageUrl    String
+
+  farmerId String
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model CropRecord {

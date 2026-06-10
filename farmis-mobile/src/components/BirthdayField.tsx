@@ -26,6 +26,7 @@ type BirthdayFieldProps = {
   placeholder?: string;
   cancelLabel?: string;
   doneLabel?: string;
+  minimumDate?: Date;
   maximumDate?: Date;
 };
 
@@ -38,6 +39,7 @@ export function BirthdayField({
   placeholder = "Select date",
   cancelLabel = "Cancel",
   doneLabel = "Done",
+  minimumDate,
   maximumDate = DEFAULT_MAX_DATE,
 }: BirthdayFieldProps) {
   const [showPicker, setShowPicker] = useState(false);
@@ -94,6 +96,7 @@ export function BirthdayField({
           value={draftDate}
           mode="date"
           display="default"
+          minimumDate={minimumDate}
           maximumDate={maximumDate}
           onChange={handleChange}
         />
@@ -118,6 +121,7 @@ export function BirthdayField({
               value={draftDate}
               mode="date"
               display="spinner"
+              minimumDate={minimumDate}
               maximumDate={maximumDate}
               onChange={handleChange}
               style={styles.iosPicker}
