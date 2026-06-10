@@ -1,0 +1,172 @@
+export type Locale = "en" | "fil" | "ceb" | "ilo" | "hil" | "bik";
+
+export type TranslationValues = Record<string, string | number>;
+
+export type Translations = {
+  common: {
+    next: string;
+    getStarted: string;
+    viewAll: string;
+    selectLanguage: string;
+    goBack: string;
+    resend: string;
+  };
+  onboarding: {
+    welcomeDescription: string;
+    chooseLanguage: string;
+    phoneNumber: string;
+    otp: string;
+    yourName: string;
+    pinCode: string;
+    terms: string;
+    invalidPhone: string;
+    otpIncomplete: string;
+    otpVerifyFailed: string;
+    otpRequestFailed: string;
+  };
+  dashboard: {
+    welcomeFarmer: string;
+    sellCrops: string;
+    category: string;
+    farmOverview: string;
+    notifications: string;
+    notificationsUnread: string;
+    cropHarvest: string;
+    cropHarvestEmpty: string;
+    cropHarvestEmptyFiltered: string;
+    cropHarvestLoadFailed: string;
+    clearCategoryFilter: string;
+    filteredByCategory: string;
+    categoryFilterAccessibility: string;
+  };
+  cropHarvest: {
+    cropType: string;
+    cropName: string;
+    plantingDate: string;
+    expectedHarvest: string;
+    statusGrowing: string;
+    statusHarvested: string;
+    retry: string;
+  };
+  categories: {
+    grainsAndCereals: string;
+    fruits: string;
+    flowers: string;
+    vegetables: string;
+  };
+  tabs: {
+    home: string;
+    explore: string;
+    activity: string;
+    profile: string;
+    exploreSubtitle: string;
+    activitySubtitle: string;
+    profileSubtitle: string;
+  };
+  assistance: {
+    programsTitle: string;
+    programsSubtitle: string;
+    distributionsTitle: string;
+    distributionsSubtitle: string;
+    targetFarmers: string;
+    fundingSource: string;
+    assistanceType: string;
+    quantity: string;
+    amount: string;
+    dateDistributed: string;
+    distributedBy: string;
+    noPrograms: string;
+    noDistributions: string;
+    loadFailed: string;
+    signInRequired: string;
+    retry: string;
+    status: {
+      completed: string;
+      pending: string;
+      cancelled: string;
+    };
+  };
+  notifications: {
+    title: string;
+    markAsRead: string;
+    markAllAsRead: string;
+    allCaughtUp: string;
+    unread: string;
+    empty: string;
+    markAllAccessibility: string;
+    markItemAccessibility: string;
+    time: {
+      justNow: string;
+      recent: string;
+      minutesAgo: string;
+      hoursAgo: string;
+      yesterday: string;
+      daysAgo: string;
+    };
+    items: {
+      assistanceProgram: { title: string; bodyNamed: string };
+      cropRecord: { title: string; bodyNamed: string };
+      assistanceDistribution: { title: string; bodyNamed: string };
+    };
+  };
+  accessibility: {
+    unread: string;
+  };
+  profile: {
+    farmerId: string;
+    registryId: string;
+    barangay: string;
+    status: string;
+    statusActive: string;
+    statusInactive: string;
+    notProvided: string;
+    edit: string;
+    changePhoto: string;
+    avatarUpdated: string;
+    avatarUpdateFailed: string;
+    personalInformation: string;
+    farmingInformation: string;
+    beneficiaryInfo: string;
+    fullName: string;
+    birthday: string;
+    placeOfBirth: string;
+    nationality: string;
+    occupation: string;
+    education: string;
+    email: string;
+    age: string;
+    gender: string;
+    genderMale: string;
+    genderFemale: string;
+    genderOther: string;
+    genderSpecify: string;
+    genderSpecifyPlaceholder: string;
+    selectBirthday: string;
+    done: string;
+    contactNumber: string;
+    alternativeContact: string;
+    address: string;
+    primaryIncome: string;
+    primaryCrop: string;
+    yearsOfFarming: string;
+    farmingType: string;
+    totalFarmingArea: string;
+    householdSize: string;
+    registeredBeneficiary: string;
+    organization: string;
+    editProfile: string;
+    saveChanges: string;
+    cancel: string;
+    profileSaved: string;
+    profileSaveFailed: string;
+    changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    updatePassword: string;
+    passwordChanged: string;
+    passwordChangeFailed: string;
+    passwordMismatch: string;
+    passwordTooShort: string;
+  };
+};
