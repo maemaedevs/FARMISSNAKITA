@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String
+  status       String   @default("active")
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model SystemUser {
+  id           String        @id @default(cuid())
+  userCode     String        @unique
+  name         String
+  username     String        @unique
+  email        String
+  role         String
+  status       String        @default("active")
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Farmer {
+  id                String   @id @default(cuid())
+  farmerCode        String   @unique
+  registryId        String   @unique
+  name              String
+  contactNumber     String
+  email             String?
+  barangay          String
+  farmAreaHa        Float
+  primaryCrops      String[]
+  status            String   @default("active")
+  registeredAt      DateTime @default(now())
+
+  address            String
+  age                Int      @default(0)
+  gender             String   @default("")
+  civilStatus        String   @default("")
+  birthday           String?
+  placeOfBirth       String?
+  nationality        String?
+  occupation         String?
+  education          String?
+  householdSize      Int      @default(0)
+  primaryIncome      String?
+  farmingExperienceYears Int
+  mainCrop           String
+  otherCrops        String
+  livestock         String
+  farmingType       String
+  farmSizeHa        Float
+  landLocation      String
+  coordinates       String
+  landType          String
+  titleNo           String
+  verifiedBy        String
+  verifiedAt        DateTime
+  notes             String
+
+  // Additional profile fields surfaced in the mobile app.
+  alternativeContact    String?
+  organization          String?
+  registeredBeneficiary Boolean @default(false)
+
+  passwordHash String?
+  avatarUrl    String?
+
+  landDocuments            FarmerLandDocument[]
+  cropRecords              CropRecord[]
+  assistanceDistributions  AssistanceDistribution[]
+}
+
+model CropRecord {
+  id                  String   @id @default(cuid())
+  cropCode            String   @unique
+  cropName            String
+  cropType            String
+  farmAreaHa          Float
+  plantingDate        DateTime
+  expectedHarvestDate DateTime
+  status              String   @default("growing")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  farmerId String
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+  @@index([status])
+  @@index([cropType])
+}
+
+model FarmerLandDocument {
+  id         String   @id @default(cuid())
+  title      String
+  status     String
+  fileUrl    String?
+  fileName   String?
+  mimeType   String?
+  uploadedAt DateTime @default(now())
+
+  farmerId  String
+  farmer    Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([farmerId])
+}
+
+model AssistanceProgram {
+  id                  String   @id @default(cuid())
+  programCode         String   @unique
+  name                String
+  tagline             String
+  programType         String
+  description         String
+  targetBeneficiaries Int
+  fundingSource       String
+  status              String
+  addedAt             DateTime @default(now())
+  icon                String
+
+  distributions AssistanceDistribution[]
+}
+
+model AssistanceDistribution {
+  id               String   @id @default(cuid())
+  distributionCode String   @unique
+  assistanceType   String
+  quantityLabel    String
+  amountPeso       Float
+  distributedAt    DateTime
+  status           String   @default("pending")
+  distributedBy    String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  programId String
+  program   AssistanceProgram @relation(fields: [programId], references: [id], onDelete: Restrict)
+
+  farmerId String
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@index([programId])
+  @@index([farmerId])
+  @@index([status])
+}
+
+model OtpCode {
+  id                String   @id @default(cuid())
+  phoneNumber       String
+  codeHash          String
+  expiresAt         DateTime
+  usedAt            DateTime?
+  attemptsRemaining Int
+  channel           String   @default("sms")
+  purpose           String   @default("mobile_login")
+  createdAt         DateTime @default(now())
+
+  @@index([phoneNumber, expiresAt])
+}
+
+model MobileUser {
+  id           String   @id @default(cuid())
+  phoneNumber String   @unique
+  name         String?
+  avatarUri    String?
+  pinCodeHash String?
+  locale       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+

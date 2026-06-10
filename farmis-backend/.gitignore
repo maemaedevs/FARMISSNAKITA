@@ -1,0 +1,15 @@
+node_modules
+dist
+
+
+# Prisma
+prisma/dev.db
+
+# Uploaded farmer avatars (keep folder via .gitkeep)
+uploads/avatars/*
+!uploads/avatars/.gitkeep
+
+# Uploaded land documents (keep folder via .gitkeep)
+uploads/land-documents/**
+!uploads/land-documents/.gitkeep
+

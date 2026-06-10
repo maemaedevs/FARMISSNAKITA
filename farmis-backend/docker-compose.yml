@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: farmis
+      POSTGRES_PASSWORD: farmis
+      POSTGRES_DB: farmis
+    ports:
+      - "5433:5432"
+    volumes:
+      - farmis-postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: maemonterola@aclcbukidnon.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - farmis-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+volumes:
+  farmis-postgres-data:
+  farmis-pgadmin-data:
